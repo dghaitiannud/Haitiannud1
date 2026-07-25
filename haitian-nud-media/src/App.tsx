@@ -29,6 +29,9 @@ import { AdminLive } from "@/pages/admin-live";
 // Importation du catalogue privé VIP
 import { VipCatalog } from "@/pages/vip-catalog";
 
+// 🎉 Composant d'animation de fête
+import { AnniversaryOverlay } from "@/components/anniversary-overlay";
+
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 function ScrollToTop() {
@@ -84,6 +87,9 @@ function App() {
           <QueryClientProvider client={queryClient}>
             <ScrollToTop /> 
             
+            {/* 🎉 Animation d'anniversaire automatique (1ère semaine d'août) */}
+            <AnniversaryOverlay />
+
             <Layout>
               <div key={location} className="animate-page-fade">
                 <Switch>
