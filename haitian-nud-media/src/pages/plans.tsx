@@ -17,11 +17,10 @@ import {
 // Utilisation de tes fonctions d'alertes push natives
 import { isPushSupported, getPushPermission, subscribeToPush } from "@/lib/push-notifications";
 
-const TELEGRAM_LINKS = [
-  { label: "Groupe 1", url: "https://t.me/+R3geXsW7ZL8zNTM5", desc: "Groupe principal" },
-  { label: "Groupe 2", url: "https://t.me/+UXtFEcF2Dw8zNGYx", desc: "Groupe secondaire" },
-  { label: "Canal 1", url: "https://t.me/hatiannud_canal", desc: "Canal officiel" },
-  { label: "Canal 2", url: "https://t.me/fans_haitian_nud", desc: "Canal communauté" },
+const COMMUNITY_LINKS = [
+  { label: "Group WhatsApp 1", url: "https://chat.whatsapp.com/LOPVxj4kg01Eeol3La0oWC?s=cl&p=a&ilr=4&amv=2", desc: "Groupe WhatsApp VIP 1" },
+  { label: "Group WhatsApp 2", url: "https://chat.whatsapp.com/L0pruKgrYrcBTtNJZ1qXpv?s=cl&p=a&ilr=4&amv=2", desc: "Groupe WhatsApp VIP 2" },
+  { label: "Canal Telegram", url: "https://t.me/hatiannud_canal", desc: "Canal officiel Telegram" },
 ];
 
 export function Plans() {
@@ -227,16 +226,16 @@ export function Plans() {
 
           <div className="max-w-xl mx-auto border-t pt-8">
             <h3 className="text-lg font-bold mb-4 flex items-center gap-2 justify-center">
-              <Send className="h-5 w-5 text-primary" /> Rejoindre nos groupes & canaux Telegram
+              <Send className="h-5 w-5 text-primary" /> Rejoindre nos communautés
             </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {TELEGRAM_LINKS.map((link) => (
-                <a key={link.url} href={link.url} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between p-3.5 bg-card border border-border rounded-xl hover:border-primary/40 transition-all">
-                  <div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {COMMUNITY_LINKS.map((link) => (
+                <a key={link.url} href={link.url} target="_blank" rel="noopener noreferrer" className="flex flex-col justify-between p-3.5 bg-card border border-border rounded-xl hover:border-primary/40 transition-all text-center">
+                  <div className="mb-2">
                     <div className="font-semibold text-xs text-foreground">{link.label}</div>
                     <div className="text-[11px] text-muted-foreground">{link.desc}</div>
                   </div>
-                  <Button size="sm" className="h-8 text-xs bg-primary text-white gap-1">Rejwenn</Button>
+                  <Button size="sm" className="w-full h-8 text-xs bg-primary text-white gap-1">Rejwenn</Button>
                 </a>
               ))}
             </div>

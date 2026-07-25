@@ -118,7 +118,7 @@ export function Footer() {
 
           <h4 className="font-semibold mt-6 mb-4">{t('footer.distribution_channels')}</h4>
           <ul className="space-y-2">
-            <li><a href="https://t.me/+R3geXsW7ZL8zNTM5" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">{t('footer.join_group')}</a></li>
+            <li><a href="https://t.me/hatiannud_canal" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">{t('footer.join_group')}</a></li>
             <li><a href="https://wa.me/50931310227" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">{t('footer.send_zen_whatsapp')}</a></li>
             <li><a href="https://T.me/dg_haitiannud" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">{t('footer.send_zen_telegram')}</a></li>
           </ul>
