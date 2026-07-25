@@ -8,7 +8,7 @@ export function AnniversaryOverlay() {
   const [years, setYears] = useState(1);
 
   // 🧪 MODE TEST : Passe à `true` pour forcer l'affichage maintenant !
-  const TEST_MODE = true; 
+  const TEST_MODE = false; 
 
   useEffect(() => {
     const now = new Date();
