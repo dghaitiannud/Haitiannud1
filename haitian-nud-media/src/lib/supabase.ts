@@ -1,9 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://lcfnjxqademkrcocvtlo.supabase.co';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxjZm5qeHFhZGVta3Jjb2N2dGxvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2Nzc1NDgsImV4cCI6MjA5NzI1MzU0OH0.Nfa_2wP8RVfV3MnFYWY17PuBnz98yyDsBiXdbxRKvxY';
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://api.haitiannud.com';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InA0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM2MDU2MDAsImV4cCI6MjA1OTE4MTYwMH0.dc_X5iR_VP_qT0zsiyj_I_OZ2T9fTRU2BBNWN8Bu4GE';
 
-// 🔐 SECURITY FIX #3: Validate env vars at initialization
 if (!supabaseUrl || !supabaseAnonKey) {
   const missing = [];
   if (!supabaseUrl) missing.push('VITE_SUPABASE_URL');
@@ -11,7 +10,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
   
   throw new Error(
     `Missing required Supabase environment variables: ${missing.join(', ')}\n` +
-    `Please set these in your Vercel Dashboard → Settings → Environment Variables`
+    `Please set these in your environment variables`
   );
 }
 
@@ -23,5 +22,4 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 });
 
 export const ADMIN_EMAIL = 'dghaitiannud@gmail.com';
-export const LIVE_ADMIN_EMAIL = 'liveadmin@gmail.com'; // 🚀 L'email autorisé à lancer le live
-
+export const LIVE_ADMIN_EMAIL = 'liveadmin@gmail.com';

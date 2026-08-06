@@ -1,7 +1,7 @@
 import { supabase } from './supabase';
 
 export const FREE_DOWNLOAD_LIMIT = 3;
-const ADMIN_ITEMS_PER_PAGE = 2000; // 🔐 FIX #11: Augmenté à 1000 pour tout voir d'un coup
+const ADMIN_ITEMS_PER_PAGE = 5000; // 🔐 FIX #11: Augmenté à 1000 pour tout voir d'un coup
 
 // Types
 export interface Video {
