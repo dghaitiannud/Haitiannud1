@@ -1,7 +1,7 @@
 // Service Worker — Haïtien Nud Média
 // Offline cache + Web Push Notifications
 
-const CACHE_NAME = 'haitiannud-v2';
+const CACHE_NAME = 'haitiannud-v3';
 const urlsToCache = ['/', '/index.html', '/logo.jpg'];
 
 // ── Install ──────────────────────────────────────────────
@@ -30,22 +30,49 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// ── Fetch (offline) ───────────────────────────────────────
+// ── Fetch (offline & network fallback) ───────────────────
 self.addEventListener('fetch', (event) => {
+  // Ignorer les requêtes non-GET et les appels d'API/Supabase
   if (
     event.request.method !== 'GET' ||
     event.request.url.includes('/api/') ||
-    event.request.url.includes('supabase')
+    event.request.url.includes('supabase') ||
+    event.request.url.includes('api.haitiannud.com')
   ) {
     return;
   }
+
   event.respondWith(
-    caches.match(event.request).then((response) => {
-      if (response) return response;
-      return fetch(event.request).catch(() => {
-        console.warn('SW: Offline — could not fetch', event.request.url);
-      });
-    })
+    fetch(event.request)
+      .then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200) {
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseToCache);
+          });
+        }
+        return networkResponse;
+      })
+      .catch(async () => {
+        console.warn('SW: Network failed, trying cache for:', event.request.url);
+
+        // 1. Chercher dans le cache
+        const cachedResponse = await caches.match(event.request);
+        if (cachedResponse) return cachedResponse;
+
+        // 2. Fallback d'accueil pour la navigation
+        if (event.request.mode === 'navigate') {
+          const indexCache = await caches.match('/');
+          if (indexCache) return indexCache;
+        }
+
+        // 3. Réponse d'erreur valide pour éviter le crash du Service Worker
+        return new Response('Offline — Contenu indisponible', {
+          status: 503,
+          statusText: 'Service Unavailable',
+          headers: new Headers({ 'Content-Type': 'text/plain; charset=utf-8' }),
+        });
+      })
   );
 });
 
