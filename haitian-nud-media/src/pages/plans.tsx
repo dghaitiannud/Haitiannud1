@@ -7,20 +7,28 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { 
-  Send, Star, CheckCircle2, ShieldCheck, DollarSign, 
-  Smartphone, Upload, Sparkles, LogIn, ArrowRight, FileImage, Crown, BellRing, ShieldAlert
+  Send, CheckCircle2, ShieldCheck, DollarSign, 
+  Smartphone, Upload, Sparkles, LogIn, ArrowRight, FileImage, Crown, BellRing, ShieldAlert, Check
 } from "lucide-react";
 
-// Utilisation de tes fonctions d'alertes push natives
 import { isPushSupported, getPushPermission, subscribeToPush } from "@/lib/push-notifications";
 
 const COMMUNITY_LINKS = [
   { label: "Group WhatsApp 1", url: "https://chat.whatsapp.com/LOPVxj4kg01Eeol3La0oWC?s=cl&p=a&ilr=4&amv=2", desc: "Groupe WhatsApp VIP 1" },
   { label: "Group WhatsApp 2", url: "https://chat.whatsapp.com/L0pruKgrYrcBTtNJZ1qXpv?s=cl&p=a&ilr=4&amv=2", desc: "Groupe WhatsApp VIP 2" },
   { label: "Canal Telegram", url: "https://t.me/hatiannud_canal", desc: "Canal officiel Telegram" },
+];
+
+const SUBSCRIPTION_PLANS = [
+  { id: "decouverte", name: "Découverte", priceUsd: 6, htg: 750, days: 7, dailyRate: "0.86$" },
+  { id: "starter", name: "Starter", priceUsd: 8, htg: 1000, days: 10, dailyRate: "0.80$" },
+  { id: "standard", name: "Standard", priceUsd: 11, htg: 1375, days: 15, dailyRate: "0.73$" },
+  { id: "avantage", name: "Avantage", priceUsd: 20, htg: 2500, days: 30, dailyRate: "0.67$", popular: true },
+  { id: "prolonje", name: "Prolonje", priceUsd: 24, htg: 3000, days: 40, dailyRate: "0.60$" },
+  { id: "confort", name: "Confort", priceUsd: 60, htg: 7500, days: 105, dailyRate: "0.571$" },
+  { id: "vip_privilege", name: "VIP Privilège", priceUsd: 200, htg: 25000, days: 365, dailyRate: "0.55$" },
 ];
 
 export function Plans() {
@@ -32,10 +40,13 @@ export function Plans() {
   const supported = isPushSupported();
 
   const [step, setStep] = useState<'info' | 'payment' | 'success'>('info');
+  const [selectedPlanId, setSelectedPlanId] = useState<string>("avantage");
   const [paymentMethod, setPaymentMethod] = useState<"moncash" | "natcash">("moncash");
   const [file, setFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pushPending, setPushPending] = useState(false);
+
+  const selectedPlan = SUBSCRIPTION_PLANS.find(p => p.id === selectedPlanId) || SUBSCRIPTION_PLANS[3];
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -84,7 +95,6 @@ export function Plans() {
       return;
     }
 
-    // Protection : Bloquer si le navigateur supporte le push mais que l'utilisateur n'a pas encore validé
     if (supported && getPushPermission() !== "granted") {
       toast.error("Action requise : Veuillez activer les notifications système avant d'envoyer.");
       return;
@@ -111,6 +121,10 @@ export function Plans() {
         user_id: (appUser as any).id,
         user_email: (appUser as any).email,
         payment_method: paymentMethod,
+        plan_id: selectedPlan.id,
+        plan_name: selectedPlan.name,
+        amount_usd: selectedPlan.priceUsd,
+        duration_days: selectedPlan.days,
         proof_url: publicUrl,
         status: "pending"
       });
@@ -123,7 +137,7 @@ export function Plans() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             title: "🚨 Nouveau reçu VIP reçu !",
-            body: `L'utilisateur ${(appUser as any).email} a envoyé une preuve via ${paymentMethod.toUpperCase()}.`,
+            body: `L'utilisateur ${(appUser as any).email} a payé ${selectedPlan.priceUsd}$ (${selectedPlan.name} - ${selectedPlan.days}j) via ${paymentMethod.toUpperCase()}.`,
             url: "/admin",
             icon: "/logo.jpg",
             targetUserId: "admin"
@@ -144,7 +158,7 @@ export function Plans() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 md:py-16 min-h-screen max-w-4xl">
+    <div className="container mx-auto px-4 py-8 md:py-16 min-h-screen max-w-5xl">
       {step === 'info' && (
         <div className="space-y-12 animate-fade-in">
           <div className="text-center max-w-2xl mx-auto">
@@ -152,44 +166,80 @@ export function Plans() {
               <Sparkles className="h-4 w-4 fill-yellow-500" /> Espace Membre Premium
             </div>
             <h1 className="text-3xl md:text-5xl font-serif font-bold mb-6 tracking-tight">
-              {isUserVip ? "Votre Abonnement VIP est Actif" : "Découvrez tous les avantages d'un abonnement VIP"}
+              {isUserVip ? "Votre Abonnement VIP est Actif" : "Choisissez votre formule VIP"}
             </h1>
             <p className="text-muted-foreground text-base md:text-lg">
               {isUserVip 
                 ? "Merci pour votre confiance ! Vous disposez actuellement d'un accès illimité et sécurisé à l'ensemble de la plateforme."
-                : "En devenant membre VIP de Haitian Nud, vous bénéficierez d'un accès exclusif et illimité à l'intégralité de notre contenu privé."
+                : "Profitez d'un accès illimité aux vidéos et photos HD selon la durée de votre choix."
               }
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Card className="bg-card/50 border-border hover:border-primary/30 transition-all">
-              <CardContent className="p-5 flex gap-4 items-start">
-                <CheckCircle2 className="h-6 w-6 text-primary shrink-0 mt-0.5" />
-                <p className="text-sm text-muted-foreground">{t('plans.vip_desc_1')}</p>
-              </CardContent>
-            </Card>
-            <Card className="bg-card/50 border-border hover:border-primary/30 transition-all">
-              <CardContent className="p-5 flex gap-4 items-start">
-                <CheckCircle2 className="h-6 w-6 text-primary shrink-0 mt-0.5" />
-                <p className="text-sm text-muted-foreground">{t('plans.vip_desc_2')}</p>
-              </CardContent>
-            </Card>
-            <Card className="bg-card/50 border-border hover:border-primary/30 transition-all">
-              <CardContent className="p-5 flex gap-4 items-start">
-                <CheckCircle2 className="h-6 w-6 text-primary shrink-0 mt-0.5" />
-                <p className="text-sm text-muted-foreground">{t('plans.vip_desc_3')}</p>
-              </CardContent>
-            </Card>
-            <Card className="bg-card/50 border-border hover:border-primary/30 transition-all">
-              <CardContent className="p-5 flex gap-4 items-start">
-                <CheckCircle2 className="h-6 w-6 text-primary shrink-0 mt-0.5" />
-                <p className="text-sm text-muted-foreground">{t('plans.vip_desc_4')}</p>
-              </CardContent>
-            </Card>
-          </div>
+          {!isUserVip && (
+            <div className="space-y-6">
+              <h2 className="text-xl font-bold text-center">Nos Formules d'Abonnement</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {SUBSCRIPTION_PLANS.map((p) => {
+                  const isSelected = selectedPlanId === p.id;
+                  return (
+                    <div 
+                      key={p.id}
+                      onClick={() => setSelectedPlanId(p.id)}
+                      className={`relative p-5 rounded-2xl border cursor-pointer transition-all flex flex-col justify-between ${
+                        isSelected 
+                          ? "border-yellow-500 bg-yellow-500/10 shadow-lg scale-[1.02]" 
+                          : "border-border bg-card/50 hover:border-primary/40"
+                      }`}
+                    >
+                      {p.popular && (
+                        <span className="absolute -top-3 right-4 bg-yellow-500 text-black text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                          Recommandé
+                        </span>
+                      )}
+                      <div>
+                        <div className="flex justify-between items-center mb-2">
+                          <h3 className="font-bold text-base">{p.name}</h3>
+                          {isSelected && <Check className="h-4 w-4 text-yellow-500" />}
+                        </div>
+                        <div className="text-2xl font-mono font-bold text-foreground">
+                          {p.priceUsd}$ <span className="text-xs font-normal text-muted-foreground">USD</span>
+                        </div>
+                        <div className="text-xs text-muted-foreground font-mono mt-0.5">
+                          ~ {p.htg.toLocaleString()} HTG
+                        </div>
+                      </div>
 
-          {isUserVip ? (
+                      <div className="mt-4 pt-3 border-t border-border/50 text-xs text-muted-foreground space-y-1">
+                        <div className="flex justify-between">
+                          <span>Durée :</span>
+                          <span className="font-bold text-foreground">{p.days} jours</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Prix par jour :</span>
+                          <span className="font-mono text-yellow-500">{p.dailyRate}</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="max-w-md mx-auto text-center pt-4">
+                {isSignedIn ? (
+                  <Button onClick={() => setStep('payment')} className="w-full py-6 text-base font-bold bg-yellow-500 hover:bg-yellow-600 text-black rounded-xl shadow-lg gap-2">
+                    S'abonner avec la formule {selectedPlan.name} ({selectedPlan.priceUsd}$) <ArrowRight className="h-5 w-5" />
+                  </Button>
+                ) : (
+                  <Button onClick={() => setLocation("/login")} variant="outline" className="w-full py-6 text-base font-bold rounded-xl gap-2">
+                    <LogIn className="h-5 w-5" /> Connectez-vous pour vous abonner
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {isUserVip && (
             <div className="max-w-md mx-auto text-center p-6 bg-gradient-to-b from-yellow-500/10 to-transparent rounded-2xl border border-yellow-500/30 relative overflow-hidden backdrop-blur-sm">
               <div className="absolute top-0 right-0 p-3 opacity-10">
                 <Crown className="h-24 w-24 text-yellow-500 fill-yellow-500" />
@@ -200,27 +250,11 @@ export function Plans() {
               <p className="text-xs uppercase tracking-widest font-bold text-yellow-500 mb-1">{t('plans.premium_active')}</p>
               <h3 className="text-xl font-bold mb-2">{t('plans.welcome_vip')}</h3>
               <p className="text-xs text-muted-foreground mb-6 leading-relaxed">
-                Votre abonnement est actuellement actif sur ce compte. Vous n'avez plus besoin d'effectuer de virement. Profitez pleinement des galeries et vidéos HD !
+                Votre abonnement est actuellement actif sur ce compte.
               </p>
               <Button onClick={() => setLocation("/vip-catalog")} className="w-full py-6 text-sm font-bold bg-yellow-500 hover:bg-yellow-600 text-black rounded-xl gap-2 shadow-lg">
                 Explorer le catalogue privé <ArrowRight className="h-4 w-4" />
               </Button>
-            </div>
-          ) : (
-            <div className="max-w-md mx-auto text-center p-6 bg-secondary/30 rounded-2xl border border-border">
-              <p className="text-xs uppercase tracking-widest text-muted-foreground font-bold text-yellow-500">{t('plans.sub_1_month')}</p>
-              <div className="text-3xl font-bold font-mono text-primary my-2 flex items-center justify-center gap-1">
-                <DollarSign className="h-7 w-7 text-yellow-500" /> 20 USD <span className="text-muted-foreground text-sm font-normal">ou</span> 2 500 HTG
-              </div>
-              <p className="text-xs text-muted-foreground mb-6">{t('plans.priority_access')}</p>
-              {isSignedIn ? (
-                <Button onClick={() => setStep('payment')} className="w-full py-6 text-base font-bold rounded-xl shadow-lg gap-2">{t('account.become_vip_now')}<ArrowRight className="h-5 w-5" />
-                </Button>
-              ) : (
-                <Button onClick={() => setLocation("/login")} variant="outline" className="w-full py-6 text-base font-bold rounded-xl gap-2">
-                  <LogIn className="h-5 w-5" /> Connectez-vous pour vous abonner
-                </Button>
-              )}
             </div>
           )}
 
@@ -248,33 +282,29 @@ export function Plans() {
           <div className="lg:col-span-7 space-y-6">
             <div className="border-b pb-4">
               <h2 className="text-2xl font-serif font-bold">{t('plans.how_to_pay')}</h2>
-              <p className="text-sm text-muted-foreground mt-1">{t('plans.pay_method_desc')}</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Formule choisie : <span className="font-bold text-yellow-500">{selectedPlan.name} ({selectedPlan.priceUsd}$ USD / ~{selectedPlan.htg} HTG / {selectedPlan.days} jours)</span>
+              </p>
             </div>
 
             <div className="bg-card border border-border rounded-xl p-5 space-y-4">
               <h3 className="font-bold text-sm flex items-center gap-2 text-primary">
-                <Smartphone className="h-4 w-4" /> Étapes du paiement via l'application (TapTap Send)
+                <Smartphone className="h-4 w-4" /> Étapes du paiement via TapTap Send
               </h3>
               <div className="space-y-3 text-xs text-muted-foreground max-h-[50vh] overflow-y-auto pr-2">
-                <p><span className="font-semibold text-foreground text-primary">Étape 1 :</span> Téléchargez l'application TapTap Send depuis l'App Store ou le Google Play Store.</p>
-                <p><span className="font-semibold text-foreground text-primary">Étape 2 :</span> Cliquez sur « S'inscrire » ou sur le logo Google.</p>
-                <p><span className="font-semibold text-foreground text-primary">Étape 3 :</span> Saisissez vos nom et prénom.</p>
-                <p><span className="font-semibold text-foreground text-primary">Étape 4 :</span> Saisissez votre numéro de téléphone et le code de confirmation reçu par SMS.</p>
-                <p><span className="font-semibold text-foreground text-primary">Étape 5 :</span> Sélectionnez le pays de destination (Haïti +509).</p>
-                <p><span className="font-semibold text-foreground text-primary">Étape 6 :</span> Saisissez le montant (20 $).</p>
-                <p><span className="font-semibold text-foreground text-primary">Étape 7 :</span> Ajoutez le nom du destinataire du paiement selon votre choix :</p>
+                <p><span className="font-semibold text-foreground text-primary">Étape 1 :</span> Ouvrez TapTap Send.</p>
+                <p><span className="font-semibold text-foreground text-primary">Étape 2 :</span> Sélectionnez Haïti (+509).</p>
+                <p><span className="font-semibold text-foreground text-primary">Étape 3 :</span> Saisissez le montant exact : <strong className="text-foreground">{selectedPlan.priceUsd} $</strong>.</p>
+                <p><span className="font-semibold text-foreground text-primary">Étape 4 :</span> Choisissez le destinataire :</p>
                 <div className="pl-4 border-l-2 border-primary/30 py-1 space-y-1 my-2 bg-muted/30 rounded-r-md">
-                  <p>• Si vous choisissez <span className="font-bold text-foreground">MonCash</span>, utilisez le numéro MonCash indiqué sur le site et le nom associé.</p>
-                  <p>• Si vous choisissez <span className="font-bold text-foreground">NatCash</span>, utilisez le numéro NatCash indiqué sur le site et le nom fourni.</p>
+                  <p>• MonCash : <span className="font-bold text-foreground">+509 34 25 08 08</span> (Jhon Wood Antoine)</p>
+                  <p>• NatCash : <span className="font-bold text-foreground">+509 32 49 24 65</span> (Dafca Saint Vill)</p>
                 </div>
-                <p>{t('plans.step_7_next')}</p>
-                <p><span className="font-semibold text-foreground text-primary">Étape 8 :</span> Saisissez votre adresse e-mail (@email.com).</p>
-                <p><span className="font-semibold text-foreground text-primary">Étape 9 :</span> Saisissez les informations de contact demandées et cliquez sur « Enregistrer ».</p>
-                <p><span className="font-semibold text-foreground text-primary">Étape 10 :</span> Vérifiez toutes les informations et cliquez sur « Envoyer ».</p>
+                <p><span className="font-semibold text-foreground text-primary">Étape 5 :</span> Validez l'envoi et prenez une capture d'écran du reçu.</p>
               </div>
             </div>
             <Button variant="ghost" onClick={() => setStep('info')} className="text-xs text-muted-foreground hover:text-foreground">
-              ← Retour aux avantages
+              ← Changer de formule
             </Button>
           </div>
 
@@ -286,6 +316,12 @@ export function Plans() {
                 </h3>
                 
                 <form onSubmit={handlePaymentSubmit} className="space-y-6">
+                  <div className="p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-xl text-xs space-y-1">
+                    <p className="font-bold text-yellow-500">Formule : {selectedPlan.name}</p>
+                    <p>Montant : <strong>{selectedPlan.priceUsd}$ USD</strong> (~{selectedPlan.htg} HTG)</p>
+                    <p>Accès : <strong>{selectedPlan.days} jours</strong> VIP</p>
+                  </div>
+
                   <div className="space-y-2">
                     <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t('plans.payment_method_used')}</Label>
                     <RadioGroup value={paymentMethod} onValueChange={(v: any) => setPaymentMethod(v)} className="grid grid-cols-2 gap-3">
@@ -300,21 +336,6 @@ export function Plans() {
                     </RadioGroup>
                   </div>
 
-                  <div className="p-4 rounded-xl bg-muted/60 border text-xs space-y-2 text-muted-foreground">
-                    <p className="font-bold text-foreground text-sm border-b pb-1">{t('plans.transfer_infos')}</p>
-                    {paymentMethod === 'moncash' ? (
-                      <>
-                        <p>Numéro MonCash : <span className="font-mono text-foreground font-bold text-sm">+509 34 25 08 08</span></p>
-                        <p>Nom Destinataire : <span className="text-foreground font-bold">Jhon Wood Antoine</span></p>
-                      </>
-                    ) : (
-                      <>
-                        <p>Numéro NatCash : <span className="font-mono text-emerald-500 font-bold text-sm">+509 32 49 24 65</span></p>
-                        <p>Nom Destinataire : <span className="text-foreground font-bold">Dafca Saint Vill</span></p>
-                      </>
-                    )}
-                  </div>
-
                   <div className="space-y-2">
                     <Label htmlFor="proof-file" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t('plans.screenshot_proof')}</Label>
                     <div className="relative flex flex-col items-center justify-center border-2 border-dashed border-border rounded-xl p-4 bg-background hover:bg-muted/20 transition-all cursor-pointer group">
@@ -325,15 +346,14 @@ export function Plans() {
                     </div>
                   </div>
 
-                  {/* Verrouillage Push Intégré */}
                   {supported && getPushPermission() !== "granted" ? (
                     <div className="p-3 border border-amber-500/30 bg-amber-500/5 rounded-xl space-y-2">
                       <p className="text-[11px] text-muted-foreground leading-normal">
-                        ⚠️ <strong>{t('plans.action_required')}</strong> Autorisez les notifications système pour débloquer l'envoi. Cela garantit la réception immédiate de l'alerte d'activation de votre compte.
+                        ⚠️ <strong>{t('plans.action_required')}</strong> Autorisez les notifications système pour débloquer l'envoi.
                       </p>
                       {getPushPermission() === "denied" ? (
                         <p className="text-[11px] text-destructive font-bold flex items-center gap-1">
-                          <ShieldAlert className="h-3.5 w-3.5" /> Autorisation bloquée. Modifiez les réglages de votre navigateur.
+                          <ShieldAlert className="h-3.5 w-3.5" /> Autorisation bloquée dans le navigateur.
                         </p>
                       ) : (
                         <Button type="button" onClick={handleActivatePushBeforeSubmit} disabled={pushPending} className="w-full bg-amber-500 hover:bg-amber-600 text-black font-bold text-xs py-2 rounded-lg gap-1.5">
@@ -342,8 +362,8 @@ export function Plans() {
                       )}
                     </div>
                   ) : (
-                    <Button type="submit" disabled={isSubmitting || !file} className="w-full py-5 text-sm font-bold rounded-xl mt-4">
-                      {isSubmitting ? "Sécurisation & Envoi..." : "Envoyer ma preuve de paiement"}
+                    <Button type="submit" disabled={isSubmitting || !file} className="w-full py-5 text-sm font-bold bg-yellow-500 hover:bg-yellow-600 text-black rounded-xl mt-4">
+                      {isSubmitting ? "Sécurisation & Envoi..." : `Envoyer ma preuve (${selectedPlan.priceUsd}$)`}
                     </Button>
                   )}
                 </form>
@@ -361,12 +381,8 @@ export function Plans() {
           <div className="space-y-2">
             <h2 className="text-3xl font-serif font-bold tracking-tight">{t('plans.thank_you')}</h2>
             <p className="text-sm text-muted-foreground px-4">
-              Votre preuve de paiement via <span className="font-semibold text-foreground uppercase">{paymentMethod}</span> a été stockée de manière sécurisée et transmise aux administrateurs.
+              Votre preuve de paiement pour la formule <span className="font-bold text-yellow-500">{selectedPlan.name} ({selectedPlan.days} jours)</span> a été transmise aux administrateurs.
             </p>
-          </div>
-          <div className="p-4 bg-card border rounded-2xl text-left text-xs text-muted-foreground leading-relaxed">
-            <p className="font-semibold text-foreground text-sm mb-1">{t('plans.what_happens_next')}</p>
-            Notre équipe vérifiera manuellement la validité de votre transfert et votre accès VIP complet sera activé sur votre compte <span className="font-semibold text-foreground">{appUser?.email}</span> en moins de 5 minutes. Vous recevrez une notification dès validation.
           </div>
           <Button onClick={() => setLocation("/")} variant="outline" className="w-full py-5 rounded-xl text-xs font-semibold">
             Retourner au Catalogue Public

@@ -1,9 +1,12 @@
 import { supabase } from './supabase';
 
 export const FREE_DOWNLOAD_LIMIT = 3;
-const ADMIN_ITEMS_PER_PAGE = 5000; // 🔐 FIX #11: Augmenté à 1000 pour tout voir d'un coup
+const ADMIN_ITEMS_PER_PAGE = 5000;
 
-// Types
+// ====================================================
+// TYPES & INTERFACES
+// ====================================================
+
 export interface Video {
   id: string;
   title: string;
@@ -72,7 +75,62 @@ export interface AdminStats {
   openTickets: number;
 }
 
-// Videos
+export interface LiveState {
+  isActive: boolean;
+  streamUrl: string | null;
+}
+
+export interface VipRequest {
+  id: string;
+  userId: string;
+  userEmail: string;
+  paymentMethod: 'moncash' | 'natcash' | string;
+  proofUrl: string;
+  planName?: string;
+  amountUsd?: number;
+  durationDays?: number;
+  status: 'pending' | 'approved' | 'rejected';
+  createdAt: string;
+}
+
+// ====================================================
+// CONVERTISSEURS / HELPERS
+// ====================================================
+
+function toPublicVideo(v: any): Video {
+  return {
+    id: v.id,
+    title: v.title,
+    description: v.description,
+    thumbnailUrl: v.thumbnail_url,
+    videoUrl: v.video_url,
+    category: v.category,
+    durationSec: v.duration_sec,
+    views: v.views || 0,
+    isVip: v.is_vip,
+    published: v.published,
+    createdAt: v.created_at,
+  };
+}
+
+function toPublicPhoto(p: any): Photo {
+  return {
+    id: p.id,
+    title: p.title,
+    description: p.description,
+    imageUrl: p.image_url,
+    category: p.category,
+    views: p.views || 0,
+    isVip: p.is_vip,
+    published: p.published,
+    createdAt: p.created_at,
+  };
+}
+
+// ====================================================
+// VIDÉOS (PUBLIC)
+// ====================================================
+
 export async function getVideos(options?: { q?: string; category?: string }): Promise<Video[]> {
   let query = supabase.from('videos').select('*').eq('published', true).order('created_at', { ascending: false }).limit(100);
 
@@ -108,13 +166,8 @@ export async function getVideo(id: string): Promise<Video | null> {
 
 export async function registerView(videoId: string) {
   try {
-    // 🚀 Incrémentation atomique directe (Style YouTube)
-    // On appelle la fonction SQL "increment_video_views" qu'on a créée à l'étape précédente
     const { error } = await supabase.rpc('increment_video_views', { video_id: videoId });
-    
     if (error) {
-      // Si tu n'as pas encore créé la fonction SQL dans l'éditeur Supabase, 
-      // voici une solution de secours en pur code (moins robuste mais fonctionnelle) :
       const { data: vid } = await supabase.from('videos').select('views').eq('id', videoId).single();
       if (vid) {
         await supabase.from('videos').update({ views: (vid.views || 0) + 1 }).eq('id', videoId);
@@ -124,7 +177,6 @@ export async function registerView(videoId: string) {
     console.warn('Failed to register view:', err);
   }
 }
-
 
 export async function requestDownload(
   videoId: string,
@@ -148,37 +200,10 @@ export async function requestDownload(
   return { url: video.video_url, remaining };
 }
 
-function toPublicVideo(v: any): Video {
-  return {
-    id: v.id,
-    title: v.title,
-    description: v.description,
-    thumbnailUrl: v.thumbnail_url,
-    videoUrl: v.video_url,
-    category: v.category,
-    durationSec: v.duration_sec,
-    views: v.views || 0,
-    isVip: v.is_vip,
-    published: v.published,
-    createdAt: v.created_at,
-  };
-}
+// ====================================================
+// PHOTOS (PUBLIC)
+// ====================================================
 
-function toPublicPhoto(p: any): Photo {
-  return {
-    id: p.id,
-    title: p.title,
-    description: p.description,
-    imageUrl: p.image_url,
-    category: p.category,
-    views: p.views || 0,
-    isVip: p.is_vip,
-    published: p.published,
-    createdAt: p.created_at,
-  };
-}
-
-// Photos Public functions
 export async function getPhotos(options?: { category?: string }): Promise<Photo[]> {
   let query = supabase.from('photos').select('*').eq('published', true).order('created_at', { ascending: false }).limit(100);
   if (options?.category) {
@@ -189,7 +214,10 @@ export async function getPhotos(options?: { category?: string }): Promise<Photo[
   return (data || []).map(toPublicPhoto);
 }
 
-// Comments
+// ====================================================
+// COMMENTAIRES
+// ====================================================
+
 export async function listComments(videoId: string): Promise<Comment[]> {
   const { data, error } = await supabase
     .from('comments')
@@ -229,7 +257,10 @@ export async function createComment(
   if (error) throw error;
 }
 
-// Tickets
+// ====================================================
+// TICKETS DE SUPPORT (UTILISATEUR)
+// ====================================================
+
 export async function listMyTickets(userId: string): Promise<SupportTicket[]> {
   const { data, error } = await supabase
     .from('tickets')
@@ -258,7 +289,10 @@ export async function createTicket(userId: string, subject: string, message: str
   if (error) throw error;
 }
 
-// Admin
+// ====================================================
+// FONCTIONS ADMINISTRATION
+// ====================================================
+
 export async function getAdminStats(): Promise<AdminStats> {
   try {
     const { count: userCount } = await supabase.from('users').select('*', { count: 'exact', head: true });
@@ -302,6 +336,7 @@ export async function getAdminStats(): Promise<AdminStats> {
   }
 }
 
+// Admin Vidéos CRUD
 export async function adminListVideos(page: number = 1): Promise<Video[]> {
   const offset = (page - 1) * ADMIN_ITEMS_PER_PAGE;
   const { data, error } = await supabase
@@ -329,14 +364,11 @@ export async function adminCreateVideo(video: Omit<Video, 'id' | 'createdAt' | '
 }
 
 export async function adminDeleteVideo(id: string) {
-  const { error } = await supabase
-    .from('videos')
-    .delete() // 🌟 Option B : Supprime définitivement la ligne de la table
-    .eq('id', id);
+  const { error } = await supabase.from('videos').delete().eq('id', id);
   if (error) throw error;
 }
 
-// 🔐 Admin Photos CRUD
+// Admin Photos CRUD
 export async function adminListPhotos(page: number = 1): Promise<Photo[]> {
   const offset = (page - 1) * ADMIN_ITEMS_PER_PAGE;
   const { data, error } = await supabase
@@ -362,13 +394,11 @@ export async function adminCreatePhoto(photo: Omit<Photo, 'id' | 'createdAt' | '
 }
 
 export async function adminDeletePhoto(id: string) {
-  const { error } = await supabase
-    .from('photos')
-    .delete() // 🌟 Option B : Supprime définitivement la ligne de la table
-    .eq('id', id);
+  const { error } = await supabase.from('photos').delete().eq('id', id);
   if (error) throw error;
 }
 
+// Admin Utilisateurs
 export async function adminListUsers(page: number = 1): Promise<AdminUser[]> {
   const offset = (page - 1) * ADMIN_ITEMS_PER_PAGE;
   const { data, error } = await supabase
@@ -398,6 +428,7 @@ export async function adminBlockUser(currentUserId: string, targetUserId: string
   if (error) throw error;
 }
 
+// Admin Tickets
 export async function adminListTickets(page: number = 1): Promise<SupportTicket[]> {
   const offset = (page - 1) * ADMIN_ITEMS_PER_PAGE;
   const { data, error } = await supabase
@@ -422,11 +453,13 @@ export async function adminReplyTicket(id: string, reply: string) {
   if (error) throw error;
 }
 
+// Confirmation d'âge
 export async function confirmAge(userId: string) {
   const { error } = await supabase.from('users').update({ age_confirmed: true }).eq('id', userId);
   if (error) throw error;
 }
 
+// Bannière d'accueil
 export async function getBannerVideo(): Promise<string> {
   try {
     const { data, error } = await supabase
@@ -456,13 +489,8 @@ export async function updateBannerVideo(url: string): Promise<boolean> {
 }
 
 // ====================================================
-//  FONCTIONS DE GESTION DU LIVE
+// FONCTIONS DE GESTION DU LIVE
 // ====================================================
-
-export interface LiveState {
-  isActive: boolean;
-  streamUrl: string | null;
-}
 
 export async function getLiveStatus(): Promise<LiveState> {
   try {
@@ -492,20 +520,9 @@ export async function updateLiveStatus(isActive: boolean, streamUrl: string | nu
 }
 
 // ====================================================
-//  FONCTIONS DE GESTION DU SYSTÈME VIP
+// FONCTIONS DE GESTION DU SYSTÈME VIP
 // ====================================================
 
-export interface VipRequest {
-  id: string;
-  userId: string;
-  userEmail: string;
-  paymentMethod: 'moncash' | 'natcash';
-  proofUrl: string;
-  status: 'pending' | 'approved' | 'rejected';
-  createdAt: string;
-}
-
-// Lister toutes les demandes VIP (avec pagination optionnelle)
 export async function adminListVipRequests(page: number = 1): Promise<VipRequest[]> {
   const offset = (page - 1) * ADMIN_ITEMS_PER_PAGE;
   const { data, error } = await supabase
@@ -521,19 +538,20 @@ export async function adminListVipRequests(page: number = 1): Promise<VipRequest
     userEmail: r.user_email,
     paymentMethod: r.payment_method,
     proofUrl: r.proof_url,
+    planName: r.plan_name || 'Formule Unique',
+    amountUsd: r.amount_usd || 20,
+    durationDays: r.duration_days || 30,
     status: r.status,
     createdAt: r.created_at,
   }));
 }
 
-// Valider une demande VIP et mettre à jour le rôle de l'utilisateur
 export async function adminProcessVipRequest(
   requestId: string, 
   userId: string, 
   action: 'approved' | 'rejected', 
   daysDuration: number = 30
 ) {
-  // 1. Mise à jour du statut de la requête
   const { error: requestError } = await supabase
     .from('vip_requests')
     .update({ status: action })
@@ -541,7 +559,6 @@ export async function adminProcessVipRequest(
 
   if (requestError) throw requestError;
 
-  // 2. Si approuvé, on passe l'utilisateur en plan VIP avec une date de fin
   if (action === 'approved') {
     const subscriptionEndsAt = new Date();
     subscriptionEndsAt.setDate(subscriptionEndsAt.getDate() + daysDuration);

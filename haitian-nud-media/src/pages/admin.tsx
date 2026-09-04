@@ -78,6 +78,7 @@ export function Admin() {
 }
 
 function AdminStatsCards() {
+  const { t } = useTranslation();
   const [stats, setStats] = useState<AdminStats | null>(null);
 
   useEffect(() => {
@@ -111,6 +112,7 @@ function StatCard({ title, value, icon: Icon, color = "text-primary" }: any) {
 }
 
 function VideosTab() {
+  const { t } = useTranslation();
   const [videos, setVideos] = useState<Video[]>([]);
   const [open, setOpen] = useState(false);
   const [contentType, setContentType] = useState("");
@@ -228,6 +230,7 @@ function VideosTab() {
 }
 
 function PhotosTab() {
+  const { t } = useTranslation();
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [open, setOpen] = useState(false);
   const [contentType, setContentType] = useState("");
@@ -357,13 +360,13 @@ function VipRequestsTab() {
     }
   };
 
-  const handleAction = async (requestId: string, userId: string, userEmail: string, action: "approved" | "rejected") => {
-    setProcessingId(requestId);
-    const duration = parseInt(selectedDuration[requestId] || "30", 10);
+  const handleAction = async (r: VipRequest, action: "approved" | "rejected") => {
+    setProcessingId(r.id);
+    const duration = parseInt(selectedDuration[r.id] || String(r.durationDays || 30), 10);
     
     try {
-      await adminProcessVipRequest(requestId, userId, action, duration);
-      toast.success(action === "approved" ? "Abonnement VIP activé avec succès !" : "Demande rejetée");
+      await adminProcessVipRequest(r.id, r.userId, action, duration);
+      toast.success(action === "approved" ? `Accès VIP activé pour ${duration} jours !` : "Demande rejetée");
       
       try {
         await fetch("https://api-6rzs.onrender.com/api/push/send", {
@@ -372,11 +375,11 @@ function VipRequestsTab() {
           body: JSON.stringify({
             title: action === "approved" ? "👑 Votre accès VIP est Actif !" : "❌ Reçu VIP non validé",
             body: action === "approved" 
-              ? `Félicitations ! Votre abonnement VIP a été validé.` 
+              ? `Félicitations ! Votre abonnement VIP (${duration} jours) a été validé.` 
               : "Le reçu envoyé pour l'abonnement VIP a été refusé. Veuillez contacter le support.",
             url: "/vip",
             icon: "/logo.jpg",
-            targetUserId: userId,
+            targetUserId: r.userId,
             adminSecret: "Pourquoi2020??" 
           })
         });
@@ -406,18 +409,19 @@ function VipRequestsTab() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Email Utilisateur</TableHead>
+                  <TableHead>Offre Demandée</TableHead>
                   <TableHead>Méthode</TableHead>
                   <TableHead>Preuve / Reçu</TableHead>
                   <TableHead>Date d'envoi</TableHead>
                   <TableHead>Statut</TableHead>
-                  <TableHead>Durée Forfait</TableHead>
+                  <TableHead>Durée Accordée</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {requests.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                       Aucune demande VIP enregistrée pour le moment.
                     </TableCell>
                   </TableRow>
@@ -425,6 +429,11 @@ function VipRequestsTab() {
                   requests.map((r) => (
                     <TableRow key={r.id} className={r.status !== 'pending' ? "opacity-60" : ""}>
                       <TableCell className="font-semibold">{r.userEmail}</TableCell>
+                      <TableCell>
+                        <span className="font-bold text-yellow-500">
+                          {r.planName || "Formule Unique"} ({r.amountUsd || 20}$)
+                        </span>
+                      </TableCell>
                       <TableCell>
                         <span className={`px-2 py-0.5 rounded text-xs font-bold uppercase ${r.paymentMethod === 'moncash' ? 'bg-muted border' : 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'}`}>
                           {r.paymentMethod}
@@ -464,16 +473,20 @@ function VipRequestsTab() {
                       <TableCell>
                         {r.status === 'pending' ? (
                           <Select 
-                            value={selectedDuration[r.id] || "30"} 
+                            value={selectedDuration[r.id] || String(r.durationDays || 30)} 
                             onValueChange={(val) => setSelectedDuration({ ...selectedDuration, [r.id]: val })}
                           >
-                            <SelectTrigger className="w-28 h-8 text-xs bg-background">
-                              <SelectValue placeholder="30 Jours" />
+                            <SelectTrigger className="w-32 h-8 text-xs bg-background">
+                              <SelectValue placeholder={`${r.durationDays || 30} Jours`} />
                             </SelectTrigger>
                             <SelectContent>
+                              <SelectItem value="7">7 Jours</SelectItem>
+                              <SelectItem value="10">10 Jours</SelectItem>
+                              <SelectItem value="15">15 Jours</SelectItem>
                               <SelectItem value="30">30 Jours</SelectItem>
-                              <SelectItem value="90">90 Jours</SelectItem>
-                              <SelectItem value="365">1 An (Privilège)</SelectItem>
+                              <SelectItem value="40">40 Jours</SelectItem>
+                              <SelectItem value="105">105 Jours</SelectItem>
+                              <SelectItem value="365">365 Jours</SelectItem>
                             </SelectContent>
                           </Select>
                         ) : (
@@ -488,7 +501,7 @@ function VipRequestsTab() {
                               variant="outline" 
                               className="h-8 border-emerald-500 text-emerald-500 hover:bg-emerald-500/10 gap-1"
                               disabled={processingId === r.id}
-                              onClick={() => handleAction(r.id, r.userId, r.userEmail, 'approved')}
+                              onClick={() => handleAction(r, 'approved')}
                             >
                               <Check className="h-3.5 w-3.5" /> Accepter
                             </Button>
@@ -497,7 +510,7 @@ function VipRequestsTab() {
                               variant="outline" 
                               className="h-8 border-destructive text-destructive hover:bg-destructive/10 gap-1"
                               disabled={processingId === r.id}
-                              onClick={() => handleAction(r.id, r.userId, r.userEmail, 'rejected')}
+                              onClick={() => handleAction(r, 'rejected')}
                             >
                               <X className="h-3.5 w-3.5" /> Rejeter
                             </Button>
@@ -519,6 +532,7 @@ function VipRequestsTab() {
 }
 
 function UsersTab() {
+  const { t } = useTranslation();
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [blockPending, setBlockPending] = useState<string | null>(null);
   const { appUser } = useAuth();
@@ -670,6 +684,7 @@ function TicketsTab() {
 }
 
 function AdminAlerts() {
+  const { t } = useTranslation();
   const [title, setTitle] = useState("Nouvelle vidéo disponible !");
   const [body, setBody] = useState("Une nouvelle vidéo vient d'être publiée sur Haïtien Nud Média. Viens voir !");
   const [url, setUrl] = useState("/");
@@ -802,7 +817,7 @@ function AdminBannerTab() {
       setUrl("");
       toast.success("Bannière réinitialisée");
     } catch (e) {
-      toast.error("Erreur lors de l'suppression");
+      toast.error("Erreur lors de la suppression");
     } finally {
       setPending(false);
     }
