@@ -9,8 +9,7 @@ import { Search as SearchIcon, Loader2 } from "lucide-react";
 const TICKER_MESSAGES = [
   "chache zen...",
   "rejwenn gwoup yo kounya!",
-  "voye zen sou: 31 31 02 27",
-  "oswa sou: 31 30 16 95"
+  "voye zen Telegram : @dg_haitiannud"
 ];
 
 export function Search() {

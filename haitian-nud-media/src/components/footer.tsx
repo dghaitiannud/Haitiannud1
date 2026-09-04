@@ -84,13 +84,12 @@ export function Footer() {
               </Button>
             </a>
             
-            <a href="https://whatsapp.com/channel/0029VbC9iNq8KMqeDjBmOW0Y" target="_blank" rel="noopener noreferrer">
+            <a href="https://whatsapp.com/channel/0029Vb7HrRy4Y9lh08zVuB3b" target="_blank" rel="noopener noreferrer">
               <Button variant="outline" size="sm" className="w-full sm:w-auto justify-start gap-2 border-border hover:border-green-500/60 hover:bg-green-500/5 hover:text-green-400">
                 <WhatsAppIcon /> Chaîne WhatsApp
               </Button>
             </a>
-
-            {/* AJOUTÉ : Partie Voye zen pa Telegram juste au-dessus de WhatsApp */}
+            
             <a href="https://t.me/dg_haitiannud" target="_blank" rel="noopener noreferrer">
               <Button variant="outline" size="sm" className="w-full sm:w-auto justify-start gap-2 border-border hover:border-sky-500/60 hover:bg-sky-500/5 hover:text-sky-400">
                 <TelegramIcon /> Voye zen pa Telegram
