@@ -9,8 +9,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { 
-  Send, CheckCircle2, ShieldCheck, DollarSign, 
-  Smartphone, Upload, Sparkles, LogIn, ArrowRight, FileImage, Crown, BellRing, ShieldAlert, Check
+  Send, ShieldCheck, 
+  Smartphone, Upload, Sparkles, LogIn, ArrowRight, FileImage, Crown, BellRing, ShieldAlert, Check, Globe, MapPin, MessageSquare
 } from "lucide-react";
 
 import { isPushSupported, getPushPermission, subscribeToPush } from "@/lib/push-notifications";
@@ -41,7 +41,7 @@ export function Plans() {
 
   const [step, setStep] = useState<'info' | 'payment' | 'success'>('info');
   const [selectedPlanId, setSelectedPlanId] = useState<string>("avantage");
-  const [paymentMethod, setPaymentMethod] = useState<"moncash" | "natcash">("moncash");
+  const [paymentMethod, setPaymentMethod] = useState<"natcash">("natcash");
   const [file, setFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pushPending, setPushPending] = useState(false);
@@ -287,22 +287,64 @@ export function Plans() {
               </p>
             </div>
 
-            <div className="bg-card border border-border rounded-xl p-5 space-y-4">
-              <h3 className="font-bold text-sm flex items-center gap-2 text-primary">
-                <Smartphone className="h-4 w-4" /> Étapes du paiement via TapTap Send
-              </h3>
-              <div className="space-y-3 text-xs text-muted-foreground max-h-[50vh] overflow-y-auto pr-2">
-                <p><span className="font-semibold text-foreground text-primary">Étape 1 :</span> Ouvrez TapTap Send.</p>
-                <p><span className="font-semibold text-foreground text-primary">Étape 2 :</span> Sélectionnez Haïti (+509).</p>
-                <p><span className="font-semibold text-foreground text-primary">Étape 3 :</span> Saisissez le montant exact : <strong className="text-foreground">{selectedPlan.priceUsd} $</strong>.</p>
-                <p><span className="font-semibold text-foreground text-primary">Étape 4 :</span> Choisissez le destinataire :</p>
-                <div className="pl-4 border-l-2 border-primary/30 py-1 space-y-1 my-2 bg-muted/30 rounded-r-md">
-                  <p>• MonCash : <span className="font-bold text-foreground">+509 34 25 08 08</span> (Jhon Wood Antoine)</p>
-                  <p>• NatCash : <span className="font-bold text-foreground">+509 32 49 24 65</span> (Dafca Saint Vill)</p>
+            {/* Instruction paiement */}
+            <div className="space-y-4">
+              {/* Option 1 : Depuis l'étranger (TapTap Send) */}
+              <div className="bg-card border border-border rounded-xl p-5 space-y-3">
+                <h3 className="font-bold text-sm flex items-center gap-2 text-primary">
+                  <Globe className="h-4 w-4" /> 1. Si vous résidez à l'Étranger (TapTap Send)
+                </h3>
+                <div className="space-y-2 text-xs text-muted-foreground pl-2">
+                  <p>• Ouvrez l'application <strong>TapTap Send</strong>.</p>
+                  <p>• Sélectionnez <strong>Haïti (+509)</strong> comme destination.</p>
+                  <p>• Saisissez le montant exact de la formule : <strong className="text-foreground">{selectedPlan.priceUsd} $ USD</strong>.</p>
+                  <p>• Envoyez sur le compte NatCash :</p>
+                  <div className="p-3 bg-muted/40 border border-border/60 rounded-lg space-y-1 my-2">
+                    <p className="text-xs">Numéro NatCash : <span className="font-bold text-foreground font-mono">+509 32 49 24 65</span></p>
+                    <p className="text-xs">Nom du compte : <span className="font-bold text-foreground">Dafca Saint Vill</span></p>
+                  </div>
+                  <p>• Prenez une capture d'écran claire de votre reçu TapTap Send.</p>
                 </div>
-                <p><span className="font-semibold text-foreground text-primary">Étape 5 :</span> Validez l'envoi et prenez une capture d'écran du reçu.</p>
+              </div>
+
+              {/* Option 2 : Depuis Haïti (Dépôt ou Transfert) */}
+              <div className="bg-card border border-border rounded-xl p-5 space-y-3">
+                <h3 className="font-bold text-sm flex items-center gap-2 text-emerald-500">
+                  <MapPin className="h-4 w-4" /> 2. Si vous résidez en Haïti (Dépôt / Transfert)
+                </h3>
+                <div className="space-y-2 text-xs text-muted-foreground pl-2">
+                  <p>• Effectuez simplement un <strong>dépôt ou un transfert direct</strong> d'un montant de <strong className="text-foreground">{selectedPlan.htg} HTG</strong>.</p>
+                  <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg space-y-1 my-2">
+                    <p className="text-xs">NatCash : <span className="font-bold text-emerald-500 font-mono">+509 32 49 24 65</span></p>
+                    <p className="text-xs">Nom du compte : <span className="font-bold text-foreground">Dafca Saint Vill</span></p>
+                  </div>
+                  <p>• Prenez une capture d'écran ou une photo nette du reçu de confirmation de transfert/dépôt.</p>
+                </div>
+              </div>
+
+              {/* Option 3 : Autre méthode via Telegram */}
+              <div className="bg-sky-500/10 border border-sky-500/20 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="space-y-1 text-center sm:text-left">
+                  <h4 className="font-bold text-xs text-sky-400 flex items-center justify-center sm:justify-start gap-1.5">
+                    <MessageSquare className="h-3.5 w-3.5" /> Vous préférez un autre moyen de paiement ?
+                  </h4>
+                  <p className="text-[11px] text-muted-foreground">
+                    Contactez-nous directement sur Telegram pour procéder au paiement.
+                  </p>
+                </div>
+                <a 
+                  href="https://T.me/dg_haitiannud" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="w-full sm:w-auto"
+                >
+                  <Button size="sm" className="w-full bg-sky-500 hover:bg-sky-600 text-white font-bold text-xs gap-1.5 rounded-lg whitespace-nowrap">
+                    Écrire sur Telegram
+                  </Button>
+                </a>
               </div>
             </div>
+
             <Button variant="ghost" onClick={() => setStep('info')} className="text-xs text-muted-foreground hover:text-foreground">
               ← Changer de formule
             </Button>
@@ -324,14 +366,10 @@ export function Plans() {
 
                   <div className="space-y-2">
                     <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t('plans.payment_method_used')}</Label>
-                    <RadioGroup value={paymentMethod} onValueChange={(v: any) => setPaymentMethod(v)} className="grid grid-cols-2 gap-3">
-                      <div>
-                        <RadioGroupItem value="moncash" id="moncash" className="sr-only" />
-                        <Label htmlFor="moncash" className={`flex items-center justify-center p-3 border rounded-xl cursor-pointer text-sm font-bold text-center transition-all ${paymentMethod === 'moncash' ? 'border-foreground bg-primary/10 text-foreground' : 'border-border bg-background hover:bg-muted'}`}>MonCash</Label>
-                      </div>
+                    <RadioGroup value={paymentMethod} onValueChange={(v: any) => setPaymentMethod(v)} className="grid grid-cols-1 gap-3">
                       <div>
                         <RadioGroupItem value="natcash" id="natcash" className="sr-only" />
-                        <Label htmlFor="natcash" className={`flex items-center justify-center p-3 border rounded-xl cursor-pointer text-sm font-bold text-center transition-all ${paymentMethod === 'natcash' ? 'border-emerald-500 bg-emerald-500/10 text-emerald-500' : 'border-border bg-background hover:bg-muted'}`}>NatCash</Label>
+                        <Label htmlFor="natcash" className="flex items-center justify-center p-3 border rounded-xl cursor-pointer text-sm font-bold text-center border-emerald-500 bg-emerald-500/10 text-emerald-500">NatCash</Label>
                       </div>
                     </RadioGroup>
                   </div>
